@@ -1,0 +1,37 @@
+
+# Rogo Speaker Application Kits for Python
+
+Flask-Rak is a `Flask extension` that makes building Rogo applications for the Rogo Speaker easier and much more fun.
+
+## The Basics
+
+A Flask-Rak application looks like:
+
+```
+from flask import Flask
+from flask_rak import Rak, session, context, statement, audio
+
+app = Flask(__name__)
+rak = Rak(app, '/')
+
+@ask.intent('HelloIntent')
+def hello(firstname):
+    speech_text = "Hello %s" % firstname
+    return statement(speech_text)
+
+if __name__ == '__main__':
+    app.run()
+
+```
+In the code above:
+
+1. The ``Rak`` object is created by passing in the Flask application and a route to forward Rogo speaker requests to.
+2. The ``intent`` decorator maps ``HelloIntent`` to a view function ``hello``.
+3. The intent's ``firstname`` slot is implicitly mapped to ``hello``'s ``firstname`` parameter.
+
+## Installation
+
+To install Flask-Rak
+```
+python setup.py install
+```
