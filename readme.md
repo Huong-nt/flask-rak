@@ -3,6 +3,7 @@
 
 Flask-Rak is a `Flask extension` that makes building Rogo applications for the Rogo Speaker easier and much more fun.
 
+This project is heavily inspired and based on John Wheeler's `Flask-ask <https://github.com/johnwheeler/flask-ask>`_ for the Alexa Skills Kit.
 ## The Basics
 
 A Flask-Rak application looks like:
@@ -34,4 +35,11 @@ In the code above:
 To install Flask-Rak
 ```
 python setup.py install
+```
+
+## Update pip package:
+update new pip package to https://pypi.org/
+```
+python setup.py sdist
+twine upload dist/*
 ```
