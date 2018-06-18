@@ -3,7 +3,7 @@
 
 Flask-Rak is a `Flask extension` that makes building Rogo applications for the Rogo Speaker easier and much more fun.
 
-This project is heavily inspired and based on John Wheeler's `Flask-ask <https://github.com/johnwheeler/flask-ask>`_ for the Alexa Skills Kit.
+This project is heavily inspired and based on John Wheeler's [Flask-ask](https://github.com/johnwheeler/flask-ask) for the Alexa Skills Kit.
 ## The Basics
 
 A Flask-Rak application looks like:
