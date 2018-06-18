@@ -14,7 +14,8 @@ def parse_requirements(filename):
 setup(
     name='Flask-Rak',
     version='0.0.1',
-    url='fpt.io',
+    url='https://github.com/Huong-nt/rogo-rak.git',
+    download_url = 'https://codeload.github.com/Huong-nt/rogo-rak/tar.gz/0.0.1',
     license='Apache 2.0',
     author='Huong NT',
     author_email='huongnt_bk@hotmail.com',
