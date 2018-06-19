@@ -1,6 +1,9 @@
 
 # Rogo Speaker Application Kits for Python
 
+[![NPM Version][npm-image]][npm-url]
+
+
 Flask-Rak is a `Flask extension` that makes building Rogo applications for the Rogo Speaker easier and much more fun.
 
 This project is heavily inspired and based on John Wheeler's [Flask-ask](https://github.com/johnwheeler/flask-ask) for the Alexa Skills Kit.
@@ -43,3 +46,7 @@ update new pip package to https://pypi.org/
 python setup.py sdist
 twine upload dist/*
 ```
+
+<!-- Markdown link & img dfn's -->
+[npm-image]: https://img.shields.io/pypi/v/flask-rak.svg
+[npm-url]: https://pypi.python.org/pypi/flask-rak
