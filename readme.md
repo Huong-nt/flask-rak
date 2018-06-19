@@ -37,6 +37,10 @@ In the code above:
 
 To install Flask-Rak
 ```
+pip install flask-ask
+```
+To install from your local clone or fork of the project, run:
+```
 python setup.py install
 ```
 
