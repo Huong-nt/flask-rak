@@ -32,7 +32,6 @@ def dbgdump(obj, default=None, cls=None):
         indent = None
     msg = json.dumps(obj, indent=indent, default=default, cls=cls)
     logger.debug(msg)
-    print msg
 
 
 request = LocalProxy(lambda: find_ask().request)
@@ -161,7 +160,6 @@ class RAK(object):
         rak_payload = self._rogo_request()
         dbgdump(rak_payload)
         request_body = models._Field(rak_payload)
-        print request_body
 
         self.version = request_body.version
         self.context = getattr(request_body, 'context', models._Field())
