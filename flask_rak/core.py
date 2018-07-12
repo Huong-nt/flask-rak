@@ -1,7 +1,8 @@
 import os
 import sys
 import inspect
-from functools import wraps, partial
+import types
+from functools import wraps, partial, update_wrapper
 
 from werkzeug.contrib.cache import SimpleCache
 from werkzeug.local import LocalProxy, LocalStack
@@ -9,20 +10,33 @@ from flask import current_app, json, request as flask_request, _app_ctx_stack
 from . import logger
 
 
-def find_ask():
+def copy_func(f):
+    """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)"""
+    g = types.FunctionType(f.func_code, f.func_globals, name=f.func_name,
+                           argdefs=f.func_defaults,
+                           closure=f.func_closure)
+    g = update_wrapper(g, f)
+    return g
+
+
+def find_rak(app_name):
     """
     Find our instance of Rak, navigating Local's and possible blueprints.
-    Note: This only supports returning a reference to the first instance
-    of Rak found.
     """
-    if hasattr(current_app, 'rak'):
-        return getattr(current_app, 'rak')
+    if hasattr(current_app, 'raks'):
+        raks = getattr(current_app, 'raks')
+        for rak in raks:
+            if rak.app_name == app_name:
+                return rak
     else:
         if hasattr(current_app, 'blueprints'):
             blueprints = getattr(current_app, 'blueprints')
             for blueprint_name in blueprints:
-                if hasattr(blueprints[blueprint_name], 'rak'):
-                    return getattr(blueprints[blueprint_name], 'rak')
+                if hasattr(blueprints[blueprint_name], 'raks'):
+                    raks = getattr(blueprints[blueprint_name], 'raks')
+                    for rak in raks:
+                        if rak.app_name == app_name:
+                            return rak
 
 
 def dbgdump(obj, default=None, cls=None):
@@ -33,27 +47,54 @@ def dbgdump(obj, default=None, cls=None):
     msg = json.dumps(obj, indent=indent, default=default, cls=cls)
     logger.debug(msg)
 
+def request(app_name):
+    return LocalProxy(lambda: find_rak(app_name).request)
 
-request = LocalProxy(lambda: find_ask().request)
-session = LocalProxy(lambda: find_ask().session)
-version = LocalProxy(lambda: find_ask().version)
-context = LocalProxy(lambda: find_ask().context)
+def session(app_name):
+    return LocalProxy(lambda: find_rak(app_name).session)
+
+def version(app_name):
+    return LocalProxy(lambda: find_rak(app_name).version)
+
+def context(app_name):
+    return LocalProxy(lambda: find_rak(app_name).context)
+
+# request = LocalProxy(lambda app_name: find_rak(app_name).request)
+# session = LocalProxy(lambda app_name: find_rak(app_name).session)
+# version = LocalProxy(lambda app_name: find_rak(app_name).version)
+# context = LocalProxy(lambda app_name: find_rak(app_name).context)
 
 from . import models
 
 
 class RAK(object):
-    def __init__(self, app=None, route=None, blueprint=None):
+
+    _intent_view_funcs = {}
+    _launch_view_func = None
+    _default_intent_view_func = None
+
+    def __init__(self, app_name=None, app=None, route=None, blueprint=None):
+        self.app_name = app_name
         self.app = app
         self._route = route
-        self._intent_view_funcs = {}
-        self._launch_view_func = None
-        self._default_intent_view_func = None
+
+        self._view_name = '_flask_view_func_' + self.app_name
+        tmp_view_func = copy_func(self._flask_view_func)
+        tmp_view_func.__name__ = self._view_name
+        self.addMethod(tmp_view_func)
 
         if app is not None:
             self.init_app(app)
         elif blueprint is not None:
             self.init_blueprint(blueprint)
+
+    @classmethod
+    def removeVariable(cls, name):
+        return delattr(cls, name)
+
+    @classmethod
+    def addMethod(cls, func):
+        return setattr(cls, func.__name__, types.MethodType(func, cls))
 
     def init_app(self, app):
         """Initializes Ask app by setting configuration variables and maps RAK route to a flask view.
@@ -63,10 +104,11 @@ class RAK(object):
         if self._route is None:
             raise TypeError(
                 "route is a required argument when app is not None")
-
-        app.rak = self
+        if not hasattr(app, 'raks'):
+            app.raks = []
+        app.raks.append(self)
         app.add_url_rule(
-            self._route, view_func=self._flask_view_func, methods=['POST'])
+            self._route, view_func=getattr(self, self._view_name), methods=['POST'])
 
     def init_blueprint(self, blueprint):
         """Initialize a Flask Blueprint, similar to init_app, but without the access
@@ -76,10 +118,11 @@ class RAK(object):
         """
         if self._route is not None:
             raise TypeError("route cannot be set when using blueprints!")
-
-        blueprint.rak = self
+        if not hasattr(blueprint, 'raks'):
+            blueprint.raks = []
+        blueprint.raks.append(self)
         blueprint.add_url_rule(
-            "", view_func=self._flask_view_func, methods=['POST'])
+            "", view_func=getattr(self, self._view_name), methods=['POST'])
 
     @property
     def session(self):
@@ -105,6 +148,7 @@ class RAK(object):
     def context(self, value):
         _app_ctx_stack.top._ask_context = value
 
+    @classmethod
     def launch(self, f):
         """Decorator maps a view function as the endpoint for an LaunchRequest and starts the app.
         @ask.launch
@@ -122,6 +166,7 @@ class RAK(object):
             self._flask_view_func(*args, **kw)
         return f
 
+    @classmethod
     def intent(self, intent_name):
         """Decorator routes an Rogo IntentRequest.
         Functions decorated as an intent are registered as the view function for the Intent's URL,
@@ -150,10 +195,10 @@ class RAK(object):
             self._flask_view_func(*args, **kw)
         return f
 
+    @classmethod
     def _rogo_request(self):
         raw_body = flask_request.data
         rogo_request_payload = json.loads(raw_body)
-
         return rogo_request_payload
 
     def _flask_view_func(self, *args, **kwargs):
@@ -163,16 +208,17 @@ class RAK(object):
 
         self.version = request_body.version
         self.context = getattr(request_body, 'context', models._Field())
-        self.session = getattr(request_body, 'session', self.session) # to keep old session.attributes through AudioRequests
- 
+        # to keep old session.attributes through AudioRequests
+        self.session = getattr(request_body, 'session', self.session)
+
         if not self.session:
             self.session = models._Field()
         if not self.session.attributes:
             self.session.attributes = models._Field()
-    
-        if context.type == 'LaunchRequest' and self._launch_view_func:
+
+        if self.context.type == 'LaunchRequest' and self._launch_view_func:
             result = self._launch_view_func(request_body)
-        elif context.type == 'IntentRequest' and self._intent_view_funcs:
+        elif self.context.type == 'IntentRequest' and self._intent_view_funcs:
             result = self._map_intent_to_view_func(self.context.intent)()
 
         if result is not None:
@@ -181,6 +227,7 @@ class RAK(object):
             return result
         return "", 400
 
+    @classmethod
     def _map_intent_to_view_func(self, intent):
         """Provides appropiate parameters to the intent functions."""
         if intent.label in self._intent_view_funcs:
@@ -188,14 +235,16 @@ class RAK(object):
         elif self._default_intent_view_func is not None:
             view_func = self._default_intent_view_func
         else:
-            raise NotImplementedError('Intent "{}" not found and no default intent specified.'.format(intent.name))
+            raise NotImplementedError(
+                'Intent "{}" not found and no default intent specified.'.format(intent.name))
 
         argspec = inspect.getargspec(view_func)
         arg_names = argspec.args
         arg_values = self._map_params_to_view_args(intent.label, arg_names)
 
         return partial(view_func, *arg_values)
-    
+
+    @classmethod
     def _map_params_to_view_args(self, view_name, arg_names):
         arg_values = []
 
@@ -208,8 +257,9 @@ class RAK(object):
 
         else:
             for param_name in self.context:
-                request_data[param_name] = getattr(self.context, param_name, None)
-        
+                request_data[param_name] = getattr(
+                    self.context, param_name, None)
+
         for arg_name in arg_names:
             arg_value = request_data.get(arg_name)
             arg_values.append(arg_value)

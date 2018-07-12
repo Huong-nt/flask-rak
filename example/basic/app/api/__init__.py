@@ -5,26 +5,26 @@ from flask import Blueprint, jsonify
 
 api = Blueprint('api', __name__)
 
-from flask_rak import RAK, session, context, audio, statement
-
-rak = RAK(api, '/weather')
+from flask_rak import RAK, statement
 
 
-@rak.launch
+APP_NAME = 'weather'
+weather_app = RAK(
+    app_name=APP_NAME,
+    app=api,
+    route='/weather'
+)
+
+
+@weather_app.launch
 def launch(data):
     '''
     data: Type _Field
     '''
     print 'launch: ', data
-    return "helllo"
+    return statement(APP_NAME, "helllo")
 
-@rak.intent('weather')
+@weather_app.intent('weather')
 def weather(city):
     speech_text = "weather in %s" % city
-    return statement(speech_text)
-
-@rak.intent('new_audio')
-def new_audio(name):
-    speech_text = "chơi bài " + name
-    sources = ['link_to_audio_file']
-    return audio(speech_text).new(sources)
+    return statement(APP_NAME, speech_text)

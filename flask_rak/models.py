@@ -65,7 +65,8 @@ class _Response(object):
     }
     '''
 
-    def __init__(self, speech):
+    def __init__(self, app_name, speech):
+        self.app_name = app_name
         self._json_default = None
         self._response = {
             'speech': {'type': 'raw', 'value': speech}
@@ -75,14 +76,14 @@ class _Response(object):
         response_wrapper = {
             'version': '1.0',
             'response': self._response,
-            'attributes': session.attributes
+            'attributes': session(self.app_name).attributes
         }
         return json.dumps(response_wrapper)
 
 
 class statement(_Response):
-    def __init__(self, speech):
-        super(statement, self).__init__(speech)
+    def __init__(self, app_name, speech):
+        super(statement, self).__init__(app_name, speech)
         self._response['shouldEndSession'] = True
 
 
@@ -100,8 +101,8 @@ class audio(_Response):
         return audio('Ok, stopping the audio').pause()
     """
 
-    def __init__(self, speech=''):
-        super(audio, self).__init__(speech)
+    def __init__(self, app_name, speech=''):
+        super(audio, self).__init__(app_name, speech)
         if not speech:
             self._response = {}
         self._response['action'] = {}
