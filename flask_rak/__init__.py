@@ -13,5 +13,6 @@ from .core import (
 
 from .models import (
     audio,
-    statement
+    statement,
+    question
 )

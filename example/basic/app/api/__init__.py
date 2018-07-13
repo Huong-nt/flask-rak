@@ -5,7 +5,7 @@ from flask import Blueprint, jsonify
 
 api = Blueprint('api', __name__)
 
-from flask_rak import RAK, statement
+from flask_rak import RAK, statement, question
 
 
 APP_NAME = 'weather'
@@ -28,3 +28,10 @@ def launch(data):
 def weather(city):
     speech_text = "weather in %s" % city
     return statement(APP_NAME, speech_text)
+
+
+@weather_app.intent('ask_city')
+def ask_city():
+    speech_text = "Bạn muốn nghe thời tiết ở thành phố nào"
+    reprompt_text = "Hãy nói tên 1 thành phố"
+    return question(APP_NAME, speech_text).reprompt(reprompt_text)

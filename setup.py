@@ -11,11 +11,12 @@ def parse_requirements(filename):
     lineiter = (line.strip() for line in open(filename))
     return [line for line in lineiter if line and not line.startswith("#")]
 
+_VERSION_ = '0.1.0'
 setup(
     name='Flask-Rak',
-    version='0.0.4',
-    url='https://github.com/Huong-nt/rogo-rak.git',
-    download_url = 'https://codeload.github.com/Huong-nt/rogo-rak/tar.gz/0.0.2',
+    version=_VERSION_,
+    url='https://github.com/Huong-nt/flask-rak.git',
+    download_url = 'https://codeload.github.com/Huong-nt/flask-rak/tar.gz/' + _VERSION_,
     license='Apache 2.0',
     author='Huong NT',
     author_email='huongnt_bk@hotmail.com',

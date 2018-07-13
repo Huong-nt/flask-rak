@@ -38,29 +38,30 @@ class _Response(object):
     '''
     {
         "data": {
-                "version": "1.0",
-                "response" {
-                        "speech": {
-                                "type": "raw",
-                                "value": "string"
-                        },
-                        "reprompt": {
-                                "speech": {
-                                        "type": "raw",
-                                        "value": "string"
-                                }
-                        },
-                        "action": {
-                                "audio": {
-                                        "interface": "new"
-                                        "sources": []
-                                }
-                        }
+            "version": "1.0",
+            "response" {
+                "speech": {
+                    "type": "raw",
+                    "value": "string"
                 },
-                "attributes": {
-                        "state": "state": "_COMMANDMODE"
+                "reprompt": {
+                    "speech": {
+                        "type": "raw",
+                        "value": "string"
+                    }
+                },
+                "action": {
+                    "audio": {
+                        "interface": "new"
+                        "sources": []
+                    }
+                },
+                "shouldEndSession": false
+            },
+            "attributes": {
+                "state": "state": "_COMMANDMODE"
 
-                }
+            }
         }
     }
     '''
@@ -86,17 +87,30 @@ class statement(_Response):
         super(statement, self).__init__(app_name, speech)
         self._response['shouldEndSession'] = True
 
+class question(_Response):
+    def __init__(self, app_name, speech):
+        super(question, self).__init__(app_name, speech)
+        self._response['shouldEndSession'] = False
+
+    def reprompt(self, reprompt):
+        reprompt = {
+            'outputSpeech': {
+                'speech': {'type': 'raw', 'value': reprompt}
+            }
+        }
+        self._response['reprompt'] = reprompt
+        return self
 
 class audio(_Response):
     """Returns a response object with an AudioPlayer Directive.
     Responses for LaunchRequests and IntentRequests may include outputSpeech in addition to an audio directive
     Note that responses to AudioPlayer requests do not allow outputSpeech.
-    @ask.intent('NewFooAudioIntent')
+    @rak.intent('NewFooAudioIntent')
     def new_foo_audio():
         speech = 'playing from foo'
         stream_urls = ['www.foo.com']
         return audio(speech).new(stream_urls)
-    @ask.intent('PauseIntent')
+    @rak.intent('PauseIntent')
     def stop_audio():
         return audio('Ok, stopping the audio').pause()
     """
