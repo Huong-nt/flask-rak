@@ -186,6 +186,7 @@ class RAK(object):
             return f
         return decorator
 
+    @classmethod
     def default_intent(self, f):
         """Decorator routes any Rogo IntentRequest that is not matched by any existing intent routing."""
         self._default_intent_view_func = f
