@@ -12,19 +12,31 @@ This project is heavily inspired and based on John Wheeler's [Flask-ask](https:/
 A Flask-Rak application looks like:
 
 ```
-from flask import Flask
-from flask_rak import Rak, session, context, statement, audio
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-app = Flask(__name__)
-rak = Rak(app, '/')
+from flask import Blueprint, jsonify
 
-@ask.intent('HelloIntent')
-def hello(firstname):
-    speech_text = "Hello %s" % firstname
-    return statement(speech_text)
+api = Blueprint('api', __name__)
 
-if __name__ == '__main__':
-    app.run()
+from flask_rak import RAK, statement, question
+
+
+APP_NAME = 'weather'
+weather_app = RAK(
+    app_name=APP_NAME,
+    app=api,
+    route='/weather'
+)
+
+@weather_app.launch
+def launch(data):
+    '''
+    data: Type _Field
+    '''
+    print 'launch: ', data
+    return statement(APP_NAME, "helllo")
+    
 
 ```
 In the code above:
