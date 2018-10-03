@@ -10,13 +10,17 @@ from flask import current_app, json, request as flask_request, _app_ctx_stack
 from . import logger
 
 
-def copy_func(f):
-    """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)"""
-    g = types.FunctionType(f.func_code, f.func_globals, name=f.func_name,
-                           argdefs=f.func_defaults,
-                           closure=f.func_closure)
-    g = update_wrapper(g, f)
-    return g
+def copy_func(f, name=None):
+    """Based on https://stackoverflow.com/a/30714299 (Aaron Hall)"""
+    '''
+    return a function with same code, globals, defaults, closure, and 
+    name (or provide a new name)
+    '''
+    fn = types.FunctionType(f.__code__, f.__globals__, name or f.__name__,
+        f.__defaults__, f.__closure__)
+    # in case f was given attrs (note this dict is a shallow copy):
+    fn.__dict__.update(f.__dict__) 
+    return fn
 
 
 def find_rak(app_name):
