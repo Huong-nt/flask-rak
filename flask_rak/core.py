@@ -258,14 +258,21 @@ class RAK(object):
         entities = getattr(self.context, 'entities', None)
         if entities is not None:
             for entity in entities:
-                request_data[entity['entity']] = entity['value']
-
+                # Sample entity value:
+                # {
+                #     "start":10,
+                #     "end":17,
+                #     "value":"hôm nay",
+                #     "real_value":{"day":"hôm nay","result":"2019-04-03T12:00:00.000+07:00"},
+                #     "entity":"$datetime"
+                # }
+                request_data[entity['entity'].replace('$', '')] = entity
         else:
             for param_name in self.context:
-                request_data[param_name] = getattr(
-                    self.context, param_name, None)
+                request_data[param_name] = getattr(self.context, param_name, None)
 
         for arg_name in arg_names:
             arg_value = request_data.get(arg_name)
             arg_values.append(arg_value)
         return arg_values
+

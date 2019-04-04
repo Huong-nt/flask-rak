@@ -33,6 +33,8 @@ Request:
 		]
 	}
 }
+```
+```
 Response:
 {
 	"version": "1.0",

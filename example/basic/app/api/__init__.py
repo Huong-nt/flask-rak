@@ -26,7 +26,7 @@ def launch(data):
 
 @weather_app.intent('weather')
 def weather(city):
-    speech_text = "weather in %s" % city
+    speech_text = "weather in %s" % city['value']
     return statement(APP_NAME, speech_text)
 
 
