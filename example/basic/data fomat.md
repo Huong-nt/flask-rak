@@ -55,6 +55,23 @@ Response:
 				"sources": []
 			}
 		},
+		"dialog": {
+			"type": "dialog",
+			"context": {
+				"intent": {
+					"label": "set_alarm"
+				},
+				"entities": [
+					{
+						"start":10,
+						"end":17,
+						"value":"hôm nay",
+						"real_value":{"day":"hôm nay","result":"2019-04-03T12:00:00.000+07:00"},
+						"entity":"$datetime"
+					}
+				]
+			}
+		},
 		"shouldEndSession": false
 	},
 	"attributes": {

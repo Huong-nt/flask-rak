@@ -56,6 +56,23 @@ class _Response(object):
                         "sources": []
                     }
                 },
+                "dialog": {
+                    "type": "dialog",
+                    "context": {
+                        "intent": {
+                            "label": "set_alarm"
+                        },
+                        "entities": [
+                            {
+                                "start":10,
+                                "end":17,
+                                "value":"hôm nay",
+                                "real_value":{"day":"hôm nay","result":"2019-04-03T12:00:00.000+07:00"},
+                                "entity":"$datetime"
+                            }
+                        ]
+                    }
+                },
                 "shouldEndSession": false
             },
             "attributes": {
@@ -100,6 +117,18 @@ class question(_Response):
         }
         self._response['reprompt'] = reprompt
         return self
+
+class dialog(_Response):
+    def __init__(self, app_name, speech, updated_context=None):
+        self._response = {
+            'shouldEndSession': False,
+            'dialog': {
+                'type': 'dialog',
+            }
+        }
+
+        if updated_context:
+            self._response['dialog']['context'] = updated_context
 
 class audio(_Response):
     """Returns a response object with an AudioPlayer Directive.

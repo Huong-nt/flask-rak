@@ -42,7 +42,6 @@ def find_rak(app_name):
                         if rak.app_name == app_name:
                             return rak
 
-
 def dbgdump(obj, default=None, cls=None):
     if current_app.config.get('RAK_PRETTY_DEBUG_LOGS', False):
         indent = 2
