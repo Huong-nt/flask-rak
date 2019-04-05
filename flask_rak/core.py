@@ -129,27 +129,27 @@ class RAK(object):
 
     @property
     def session(self):
-        return getattr(_app_ctx_stack.top, '_rak_session', models._Field())
+        return getattr(_app_ctx_stack.top, self.app_name + '_rak_session', models._Field())
 
     @session.setter
     def session(self, value):
-        _app_ctx_stack.top._rak_session = value
+        setattr(_app_ctx_stack.top, self.app_name + '_rak_session', value)
 
     @property
     def version(self):
-        return getattr(_app_ctx_stack.top, '_rak_version', None)
+        return getattr(_app_ctx_stack.top, self.app_name + '_rak_version', None)
 
     @version.setter
     def version(self, value):
-        _app_ctx_stack.top._rak_version = value
+        setattr(_app_ctx_stack.top, self.app_name + '_rak_version', value)
 
     @property
     def context(self):
-        return getattr(_app_ctx_stack.top, '_ask_context', None)
+        return getattr(_app_ctx_stack.top, self.app_name + '_rak_context', None)
 
     @context.setter
     def context(self, value):
-        _app_ctx_stack.top._ask_context = value
+        setattr(_app_ctx_stack.top, self.app_name + '_rak_context', value)
 
     @classmethod
     def launch(self, f):
@@ -257,14 +257,6 @@ class RAK(object):
         entities = getattr(self.context, 'entities', None)
         if entities is not None:
             for entity in entities:
-                # Sample entity value:
-                # {
-                #     "start":10,
-                #     "end":17,
-                #     "value":"hôm nay",
-                #     "real_value":{"day":"hôm nay","result":"2019-04-03T12:00:00.000+07:00"},
-                #     "entity":"$datetime"
-                # }
                 request_data[entity['entity'].replace('$', '')] = entity
         else:
             for param_name in self.context:

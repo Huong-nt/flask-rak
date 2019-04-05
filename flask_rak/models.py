@@ -120,12 +120,11 @@ class question(_Response):
 
 class dialog(_Response):
     def __init__(self, app_name, speech, updated_context=None):
-        self._response = {
-            'shouldEndSession': False,
-            'dialog': {
-                'type': 'dialog',
+        super(dialog, self).__init__(app_name, speech)
+        self._response['shouldEndSession'] = False
+        self._response['dialog'] = {
+                # 'type': 'dialog',
             }
-        }
 
         if updated_context:
             self._response['dialog']['context'] = updated_context
