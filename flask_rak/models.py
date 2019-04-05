@@ -28,9 +28,6 @@ class _Field(dict):
             self[key] = value
 
     def __getattr__(self, attr):
-        # converts timestamp str to datetime.datetime object
-        if 'timestamp' in attr:
-            return aniso8601.parse_datetime(self.get(attr))
         return self.get(attr)
 
     def __setattr__(self, key, value):

@@ -256,9 +256,12 @@ class RAK(object):
         arg_values = []
 
         request_data = {}
-
         entities = getattr(self.context, 'entities', None)
+        dialog_entities = getattr(self.context.dialog, 'entities', None)
+
         if entities is not None:
+            if dialog_entities is not None:
+                entities += dialog_entities
             for entity in entities:
                 request_data[entity['entity'].replace('$', '')] = entity
         else:
