@@ -14,5 +14,6 @@ from .core import (
 from .models import (
     audio,
     statement,
-    question
+    question,
+    dialog
 )
