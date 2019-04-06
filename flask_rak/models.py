@@ -57,7 +57,8 @@ class _Response(object):
                     }
                 },
                 "dialog": {
-                    "type": "dialog",
+                    "type": "RAW|PREDICT",
+			        "state": "STARTED|INPROGRESS|COMPLETED",
                     "context": {
                         "intent": {
                             "label": "set_alarm"
@@ -119,15 +120,15 @@ class question(_Response):
         return self
 
 class dialog(_Response):
-    def __init__(self, app_name, speech, updated_context=None):
+    def __init__(self, app_name, speech, dialog_type='RAW', updated_context=None):
         super(dialog, self).__init__(app_name, speech)
         self._response['shouldEndSession'] = False
         self._response['dialog'] = {
-                # 'type': 'dialog',
+                'type': dialog_type, # RAW or PREDICT
             }
 
         if updated_context:
-            self._response['dialog']['context'] = updated_context
+            self._response['dialog'].update(updated_context)
 
 class audio(_Response):
     """Returns a response object with an AudioPlayer Directive.
