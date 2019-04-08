@@ -5,7 +5,7 @@ from flask import Blueprint, jsonify
 
 weather_blueprint = Blueprint('api', __name__)
 
-from flask_rak import RAK, statement, question
+from flask_rak import RAK, session, context, statement, question, dialog
 
 
 weather_app = RAK(
@@ -19,17 +19,25 @@ def launch(data):
     '''
     data: Type _Field
     '''
-    print 'launch: ', data
+    print('launch: ', data)
+    print('session: ', session)
     return statement("helllo")
 
 @weather_app.intent('weather')
 def weather(city):
+    if city is None:
+        # dialog to get city value
+        return dialog(
+            speech="Bạn muốn biết thời tiết ở thành phố nào?",
+            dialog_type='PREDICT',
+            updated_context={
+                'state': 'INPROGRESS',
+                'expectEntity': ['city'],
+                'intent': context.intent,
+                'entities': context.entities
+            }
+        )
+
     speech_text = "weather in %s" % city['value']
     return statement(speech_text)
 
-
-@weather_app.intent('ask_city')
-def ask_city():
-    speech_text = "Bạn muốn nghe thời tiết ở thành phố nào"
-    reprompt_text = "Hãy nói tên 1 thành phố"
-    return question(speech_text).reprompt(reprompt_text)
