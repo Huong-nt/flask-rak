@@ -3,6 +3,7 @@
 
 import json
 import aniso8601
+from flask import make_response
 
 from .core import session
 
@@ -96,7 +97,9 @@ class _Response(object):
             'response': self._response,
             'attributes': session.attributes
         }
-        return json.dumps(response_wrapper)
+        res = make_response(json.dumps(response_wrapper))
+        res.mimetype = 'application/json'
+        return res
 
 
 class statement(_Response):
