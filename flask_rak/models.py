@@ -84,8 +84,7 @@ class _Response(object):
     }
     '''
 
-    def __init__(self, app_name, speech):
-        self.app_name = app_name
+    def __init__(self, speech):
         self._json_default = None
         self._response = {
             'speech': {'type': 'raw', 'value': speech}
@@ -95,19 +94,19 @@ class _Response(object):
         response_wrapper = {
             'version': '1.0',
             'response': self._response,
-            'attributes': session(self.app_name).attributes
+            'attributes': session.attributes
         }
         return json.dumps(response_wrapper)
 
 
 class statement(_Response):
-    def __init__(self, app_name, speech):
-        super(statement, self).__init__(app_name, speech)
+    def __init__(self, speech):
+        super(statement, self).__init__(speech)
         self._response['shouldEndSession'] = True
 
 class question(_Response):
-    def __init__(self, app_name, speech):
-        super(question, self).__init__(app_name, speech)
+    def __init__(self, speech):
+        super(question, self).__init__(speech)
         self._response['shouldEndSession'] = False
 
     def reprompt(self, reprompt):
@@ -120,8 +119,8 @@ class question(_Response):
         return self
 
 class dialog(_Response):
-    def __init__(self, app_name, speech, dialog_type='RAW', updated_context=None):
-        super(dialog, self).__init__(app_name, speech)
+    def __init__(self, speech, dialog_type='RAW', updated_context=None):
+        super(dialog, self).__init__(speech)
         self._response['shouldEndSession'] = False
         self._response['dialog'] = {
                 'type': dialog_type, # RAW or PREDICT
@@ -144,8 +143,8 @@ class audio(_Response):
         return audio('Ok, stopping the audio').pause()
     """
 
-    def __init__(self, app_name, speech=''):
-        super(audio, self).__init__(app_name, speech)
+    def __init__(self, speech=''):
+        super(audio, self).__init__(speech)
         if not speech:
             self._response = {}
         self._response['action'] = {}

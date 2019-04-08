@@ -20,30 +20,25 @@ def copy_func(f, name=None):
     name (or provide a new name)
     '''
     fn = types.FunctionType(f.__code__, f.__globals__, name or f.__name__,
-        f.__defaults__, f.__closure__)
+                            f.__defaults__, f.__closure__)
     # in case f was given attrs (note this dict is a shallow copy):
-    fn.__dict__.update(f.__dict__) 
+    fn.__dict__.update(f.__dict__)
     return fn
 
 
-def find_rak(app_name):
+def find_rak():
     """
     Find our instance of Rak, navigating Local's and possible blueprints.
     """
-    if hasattr(current_app, 'raks'):
-        raks = getattr(current_app, 'raks')
-        for rak in raks:
-            if rak.app_name == app_name:
-                return rak
+    if hasattr(current_app, 'rak'):
+        return getattr(current_app, 'rak')
     else:
         if hasattr(current_app, 'blueprints'):
             blueprints = getattr(current_app, 'blueprints')
             for blueprint_name in blueprints:
-                if hasattr(blueprints[blueprint_name], 'raks'):
-                    raks = getattr(blueprints[blueprint_name], 'raks')
-                    for rak in raks:
-                        if rak.app_name == app_name:
-                            return rak
+                if hasattr(blueprints[blueprint_name], 'rak'):
+                    return getattr(blueprints[blueprint_name], 'rak')
+
 
 def dbgdump(obj, default=None, cls=None):
     if current_app.config.get('RAK_PRETTY_DEBUG_LOGS', False):
@@ -53,22 +48,11 @@ def dbgdump(obj, default=None, cls=None):
     msg = json.dumps(obj, indent=indent, default=default, cls=cls)
     logger.debug(msg)
 
-def request(app_name):
-    return LocalProxy(lambda: find_rak(app_name).request)
 
-def session(app_name):
-    return LocalProxy(lambda: find_rak(app_name).session)
-
-def version(app_name):
-    return LocalProxy(lambda: find_rak(app_name).version)
-
-def context(app_name):
-    return LocalProxy(lambda: find_rak(app_name).context)
-
-# request = LocalProxy(lambda app_name: find_rak(app_name).request)
-# session = LocalProxy(lambda app_name: find_rak(app_name).session)
-# version = LocalProxy(lambda app_name: find_rak(app_name).version)
-# context = LocalProxy(lambda app_name: find_rak(app_name).context)
+request = LocalProxy(lambda: find_rak().request)
+session = LocalProxy(lambda: find_rak().session)
+version = LocalProxy(lambda: find_rak().version)
+context = LocalProxy(lambda: find_rak().context)
 
 from . import models
 
@@ -79,12 +63,11 @@ class RAK(object):
     _launch_view_func = None
     _default_intent_view_func = None
 
-    def __init__(self, app_name=None, app=None, route=None, blueprint=None):
-        self.app_name = app_name
+    def __init__(self, app=None, route=None, blueprint=None):
         self.app = app
         self._route = route
 
-        self._view_name = '_flask_view_func_' + self.app_name
+        self._view_name = '_flask_view_func_'
         tmp_view_func = copy_func(self._flask_view_func)
         tmp_view_func.__name__ = self._view_name
         self.addMethod(tmp_view_func)
@@ -110,11 +93,9 @@ class RAK(object):
         if self._route is None:
             raise TypeError(
                 "route is a required argument when app is not None")
-        if not hasattr(app, 'raks'):
-            app.raks = []
-        app.raks.append(self)
-        app.add_url_rule(
-            self._route, view_func=getattr(self, self._view_name), methods=['POST'])
+
+        app.rak = self
+        app.add_url_rule(self._route, view_func=getattr(self, self._view_name), methods=['POST'])
 
     def init_blueprint(self, blueprint):
         """Initialize a Flask Blueprint, similar to init_app, but without the access
@@ -124,35 +105,33 @@ class RAK(object):
         """
         if self._route is not None:
             raise TypeError("route cannot be set when using blueprints!")
-        if not hasattr(blueprint, 'raks'):
-            blueprint.raks = []
-        blueprint.raks.append(self)
-        blueprint.add_url_rule(
-            "", view_func=getattr(self, self._view_name), methods=['POST'])
+
+        blueprint.rak = self
+        blueprint.add_url_rule("", view_func=getattr(self, self._view_name), methods=['POST'])
 
     @property
     def session(self):
-        return getattr(_app_ctx_stack.top, self.app_name + '_rak_session', models._Field())
+        return getattr(_app_ctx_stack.top, '_rak_session', models._Field())
 
     @session.setter
     def session(self, value):
-        setattr(_app_ctx_stack.top, self.app_name + '_rak_session', value)
+        setattr(_app_ctx_stack.top, '_rak_session', value)
 
     @property
     def version(self):
-        return getattr(_app_ctx_stack.top, self.app_name + '_rak_version', None)
+        return getattr(_app_ctx_stack.top, '_rak_version', None)
 
     @version.setter
     def version(self, value):
-        setattr(_app_ctx_stack.top, self.app_name + '_rak_version', value)
+        setattr(_app_ctx_stack.top, '_rak_version', value)
 
     @property
     def context(self):
-        return getattr(_app_ctx_stack.top, self.app_name + '_rak_context', None)
+        return getattr(_app_ctx_stack.top, '_rak_context', None)
 
     @context.setter
     def context(self, value):
-        setattr(_app_ctx_stack.top, self.app_name + '_rak_context', value)
+        setattr(_app_ctx_stack.top, '_rak_context', value)
 
     @classmethod
     def launch(self, f):
@@ -257,8 +236,11 @@ class RAK(object):
 
         request_data = {}
         entities = getattr(self.context, 'entities', None)
-        dialog_entities = getattr(self.context.dialog, 'entities', None)
-
+        try:
+            dialog_entities = getattr(self.context.dialog, 'entities', None)
+        except Exception:
+            dialog_entities = None
+            
         if entities is not None:
             if dialog_entities is not None:
                 entities += dialog_entities
@@ -272,4 +254,3 @@ class RAK(object):
             arg_value = request_data.get(arg_name)
             arg_values.append(arg_value)
         return arg_values
-
