@@ -3,6 +3,7 @@
 
 import json
 import aniso8601
+import uuid
 from flask import make_response
 
 from .core import session
@@ -52,9 +53,12 @@ class _Response(object):
                     }
                 },
                 "action": {
+                    "playBehavior": "REPLACE_ALL|ENQUEUE|REPLACE_ENQUEUED"
                     "audio": {
                         "interface": "new"
-                        "sources": []
+                        "sources": [],
+                        "offsetInMilliseconds": 0,
+                        "token": "xxx"
                     }
                 },
                 "dialog": {
@@ -153,11 +157,14 @@ class audio(_Response):
         self._response['action'] = {}
         self._response['action']['audio'] = {}
 
-    def new(self, sources):
+    def new(self, sources, offset=0, token=None):
         """Sends a Play Directive to begin playback and replace current and enqueued streams."""
         self._response['shouldEndSession'] = True
+        self._response['action']['playBehavior'] = "ENQUEUE"
         self._response['action']['audio']['interface'] = 'new'
         self._response['action']['audio']['sources'] = sources
+        self._response['action']['audio']['token'] = token
+        self._response['action']['audio']['offsetInMilliseconds'] = offset
         return self
 
     def stop(self):
@@ -167,11 +174,14 @@ class audio(_Response):
         self._response['action']['audio']['sources'] = []
         return self
 
-    def play(self):
+    def play(self, sources, offset, token=None):
         """Send signal to resume playback at the paused offset"""
         self._response['shouldEndSession'] = True
+        self._response['action']['playBehavior'] = 'REPLACE_ALL'
         self._response['action']['audio']['interface'] = 'play'
-        self._response['action']['audio']['sources'] = []
+        self._response['action']['audio']['sources'] = sources
+        self._response['action']['audio']['token'] = token
+        self._response['action']['audio']['offsetInMilliseconds'] = offset
         return self
 
     def pause(self):
@@ -181,9 +191,11 @@ class audio(_Response):
         self._response['action']['audio']['sources'] = []
         return self
 
-    def next(self):
+    def next(self, sources, playBehavior="REPLACE_ALL", token=None):
         """Send signal to resume playback at the paused offset"""
         self._response['shouldEndSession'] = True
+        self._response['action']['playBehavior'] = playBehavior
         self._response['action']['audio']['interface'] = 'next'
-        self._response['action']['audio']['sources'] = []
+        self._response['action']['audio']['sources'] = sources
+        self._response['action']['audio']['token'] = token
         return self
