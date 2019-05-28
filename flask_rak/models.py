@@ -174,7 +174,7 @@ class audio(_Response):
         self._response['action']['audio']['sources'] = []
         return self
 
-    def play(self, sources, offset, token=None):
+    def play(self, sources, offset=0, token=None):
         """Send signal to resume playback at the paused offset"""
         self._response['shouldEndSession'] = True
         self._response['action']['playBehavior'] = 'REPLACE_ALL'
