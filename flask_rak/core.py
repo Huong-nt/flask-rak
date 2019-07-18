@@ -1,15 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Standard library import
+import inspect
 import os
 import sys
-import inspect
 import types
+from collections import defaultdict
 from functools import wraps, partial, update_wrapper
 
+# Third party import
+from flask import current_app, json, request as flask_request, _app_ctx_stack
 from werkzeug.contrib.cache import SimpleCache
 from werkzeug.local import LocalProxy, LocalStack
-from flask import current_app, json, request as flask_request, _app_ctx_stack
+
+# Local application imports
 from . import logger
 
 
@@ -56,16 +61,19 @@ context = LocalProxy(lambda: find_rak().context)
 
 from . import models
 
+app_name_global = None
 
 class RAK(object):
 
-    _intent_view_funcs = {}
+    _intent_view_funcs = defaultdict(dict)
     _launch_view_func = None
     _default_intent_view_func = None
 
     def __init__(self, app=None, route=None, blueprint=None):
         self.app = app
         self._route = route
+        global app_name_global
+        app_name_global = app.name
 
         self._view_name = '_flask_view_func_'
         tmp_view_func = copy_func(self._flask_view_func)
@@ -163,8 +171,7 @@ class RAK(object):
             intent_name {str} -- Name of the intent request to be mapped to the decorated function
         """
         def decorator(f):
-            self._intent_view_funcs[intent_name] = f
-
+            self._intent_view_funcs[app_name_global][intent_name] = f
             @wraps(f)
             def wrapper(*args, **kw):
                 self._flask_view_func(*args, **kw)
@@ -183,8 +190,10 @@ class RAK(object):
 
     @classmethod
     def _rogo_request(self):
+        app_name = flask_request.blueprint
         raw_body = flask_request.data
         rogo_request_payload = json.loads(raw_body)
+        rogo_request_payload['app_name'] = app_name
         return rogo_request_payload
 
     def _flask_view_func(self, *args, **kwargs):
@@ -192,6 +201,7 @@ class RAK(object):
         dbgdump(rak_payload)
         request_body = models._Field(rak_payload)
 
+        self.app_name = request_body.app_name
         self.version = request_body.version
         self.context = getattr(request_body, 'context', models._Field())
         # to keep old session.attributes through AudioRequests
@@ -216,13 +226,13 @@ class RAK(object):
     @classmethod
     def _map_intent_to_view_func(self, intent):
         """Provides appropiate parameters to the intent functions."""
-        if intent.label in self._intent_view_funcs:
-            view_func = self._intent_view_funcs[intent.label]
+        if intent.label in self._intent_view_funcs[self.app_name]:
+            view_func = self._intent_view_funcs[self.app_name][intent.label]
         elif self._default_intent_view_func is not None:
             view_func = self._default_intent_view_func
         else:
             raise NotImplementedError(
-                'Intent "{}" not found and no default intent specified.'.format(intent.name))
+                f'Intent "{intent.label}" not found and no default intent specified.')
 
         argspec = inspect.getargspec(view_func)
         arg_names = argspec.args
