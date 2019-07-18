@@ -11,7 +11,7 @@ def parse_requirements(filename):
     lineiter = (line.strip() for line in open(filename))
     return [line for line in lineiter if line and not line.startswith("#")]
 
-_VERSION_ = '2019.05.28.1'
+_VERSION_ = '2019.07.18.1'
 setup(
     name='Flask-Rak',
     version=_VERSION_,
