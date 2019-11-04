@@ -4,4 +4,4 @@ Flask==0.12.2
 Flask-Rak==0.0.2
 python-dateutil==2.6.1
 six==1.10.0
-Werkzeug==0.12.2
+Werkzeug==0.15.3
