@@ -126,9 +126,15 @@ class question(_Response):
         return self
 
 class dialog(_Response):
-    def __init__(self, speech, dialog_type='RAW', updated_context=None):
+    def __init__(self, speech, sources=None, dialog_type='RAW', updated_context=None):
         super(dialog, self).__init__(speech)
         self._response['shouldEndSession'] = False
+        if sources is not None:
+            self._response['action'] = {}
+            self._response['action']['audio'] = {}
+            self._response['action']['audio']['sources'] = sources
+            self._response['action']['playBehavior'] = 'REPLACE_ALL'
+        
         self._response['dialog'] = {
                 'type': dialog_type, # RAW or PREDICT
             }
